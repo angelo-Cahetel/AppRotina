@@ -8,74 +8,70 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State private var tarefas = [
-        ("Caminhar 30 min", false),
-        ("Ler 1 capítulo da Biblia", false),
-        ("Tomar café", true)
-    ]
+    @EnvironmentObject var manager: TaskManeger
     
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 20) {
-                // mensagem de olá
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Bom dia, Ângelo 👋")
-                        .font(.title)
-                        .bold()
-                    Text(Date(), style: .date)
-                        .foregroundStyle(.gray)
-                }
-                .padding(.top)
+            VStack(alignment: .center) {
+               Text("Bom dia, Ângelo!")
+                    .font(.title)
+                    .bold()
+                Text(Date(), style: .date)
+                    .foregroundColor(.gray)
                 
-                // próxima taréfa
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Próxima tarefa")
-                        .font(.headline)
-                    Text("Estudar SwiftUI")
-                        .font(.title3)
-                    Text("10:00 - 11:30")
-                        .foregroundColor(.gray)
+                if let proxima = manager.tarefas.filter({ !$0.concluida }).sorted(by:{ $0.data < $1.data}).first {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Próxima tarefa")
+                            .font(.headline)
+                        Text(proxima.titulo)
+                            .font(.title3)
+                        Text(proxima.data.formatted(date: .omitted, time: .shortened))
+                            .foregroundColor(.gray)
+                    }
+                    .padding()
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(12)
                 }
-                .padding()
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(12)
                 
-                // Lista de tarefas
                 Text("Minhas tarefas de hoje")
                     .font(.headline)
                 
-                ForEach(tarefas.indices, id: \.self) { i in
-                    HStack {
-                        Image(systemName: tarefas[i].1 ? "checkmark.circle.fill" : "circle")
-                            .onTapGesture {
-                                tarefas[i].1.toggle()
+                List {
+                    ForEach(manager.tarefas) { tarefa in
+                        HStack {
+                            Image(systemName: tarefa.concluida ? "checkmark.circle.fill" : "circle")
+                                .onTapGesture {
+                                    manager.alternarConclusao(id: tarefa.id)
+                                }
+                            VStack(alignment: .leading) {
+                                Text(tarefa.titulo)
+                                    .strikethrough(tarefa.concluida, color: .gray)
+                                    .foregroundColor(tarefa.concluida ? .gray : .primary)
+                                Text(tarefa.data.formatted(date: .omitted, time: .shortened))
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
                             }
-                        Text(tarefas[i].0)
-                            .strikethrough(tarefas[i].1, color: .gray)
-                            .foregroundColor(tarefas[i].1 ? .gray : .primary)
+                        }
                     }
-                    .padding(.vertical, 4)
                 }
+                .listStyle(.plain)
+                
                 Spacer()
                 
-                // Botão nova tarefa
-                Button(action: {
-                    //ação de adicionar tarefa
-                }) {
+                NavigationLink(destination: NovaTarefaView()) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
-                        Text("Nova tarefa")
+                        Text("Nova Tarefa")
                             .bold()
                     }
                     .padding()
-                    .frame(maxWidth: .infinity)
                     .background(Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }
             }
             .padding()
-            .navigationTitle(Text("Hoje"))
+            .navigationTitle("Hoje")
         }
     }
 }
