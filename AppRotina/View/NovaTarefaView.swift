@@ -9,7 +9,8 @@ import SwiftUI
 
 struct NovaTarefaView: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var manager: TaskManeger
+    @Environment(\.managedObjectContext) private var viewContext
+    //    @EnvironmentObject var manager: TaskManeger
     
     @State var titulo: String = ""
     @State var descricao: String = ""
@@ -48,14 +49,20 @@ struct NovaTarefaView: View {
                     if titulo.trimmingCharacters(in: .whitespaces).isEmpty {
                         mostrarAlerta = true
                     } else {
-                        let nova = Tarefa(
-                            titulo: titulo,
-                            descricao: descricao,
-                            data: dataHora,
-                            prioridade: prioridade
-                        )
-                        manager.adicionar(nova)
-                        dismiss()
+                        let nova = TarefaEntity(context: viewContext)
+                        nova.id = UUID()
+                        nova.titulo = titulo
+                        nova.descricao = descricao
+                        nova.data = dataHora
+                        nova.prioridade = prioridade
+                        nova.concluida = false
+                        
+                        do {
+                            try viewContext.save()
+                            dismiss()
+                        } catch {
+                            print("Erro ao salvar tarefa: \(error)")
+                        }
                     }
                 }
                 .foregroundColor(.blue)

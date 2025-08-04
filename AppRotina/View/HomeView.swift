@@ -7,8 +7,16 @@
 
 import SwiftUI
 
+
+
 struct HomeView: View {
-    @EnvironmentObject var manager: TaskManeger
+    @Environment(\.managedObjectContext) private var viewContext
+    
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \TarefaEntity.data, ascending: true)],
+        animation: .default
+    )
+    private var tarefas: FetchedResults<TarefaEntity>
     
     var body: some View {
         NavigationView {
@@ -19,13 +27,13 @@ struct HomeView: View {
                 Text(Date(), style: .date)
                     .foregroundColor(.gray)
                 
-                if let proxima = manager.tarefas.filter({ !$0.concluida }).sorted(by:{ $0.data < $1.data}).first {
+                if let proxima = tarefas.filter({ !$0.concluida }).first {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Próxima tarefa")
                             .font(.headline)
-                        Text(proxima.titulo)
+                        Text(proxima.titulo ?? "Sem título")
                             .font(.title3)
-                        Text(proxima.data.formatted(date: .omitted, time: .shortened))
+                        Text(proxima.data?.formatted(date: .omitted, time: .shortened) ?? "")
                             .foregroundColor(.gray)
                     }
                     .padding()
@@ -37,17 +45,20 @@ struct HomeView: View {
                     .font(.headline)
                 
                 List {
-                    ForEach(manager.tarefas) { tarefa in
+                    ForEach(tarefas) { tarefa in
                         HStack {
                             Image(systemName: tarefa.concluida ? "checkmark.circle.fill" : "circle")
                                 .onTapGesture {
-                                    manager.alternarConclusao(id: tarefa.id)
+                                    withAnimation {
+                                        tarefa.concluida.toggle()
+                                        try? viewContext.save()
+                                    }
                                 }
                             VStack(alignment: .leading) {
-                                Text(tarefa.titulo)
+                                Text(tarefa.titulo ?? "")
                                     .strikethrough(tarefa.concluida, color: .gray)
                                     .foregroundColor(tarefa.concluida ? .gray : .primary)
-                                Text(tarefa.data.formatted(date: .omitted, time: .shortened))
+                                Text(tarefa.data?.formatted(date: .omitted, time: .shortened) ?? "")
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }

@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import CoreData
 
 @main
 struct AppRotinaApp: App {
+    let persistence = PersistenceController.shared
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
+                .environment(\.managedObjectContext, persistence.container.viewContext)
         }
     }
 }
